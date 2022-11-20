@@ -30,7 +30,7 @@ function searchSubmit(event) {
 }
 
 function searchCity(city) {
-  let apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&&units=metric`;
+  let apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
 
   axios.get(apiUrl).then(showAll);
 }
@@ -56,7 +56,7 @@ function showAll(response) {
   let temperature = Math.round(Number(response.data.main.temp));
   currentGradCtemperature = temperature;
   let gradElement = document.querySelector("#grad");
-  gradElement.innerHTML = `${temperature} °C`;
+  gradElement.innerHTML = `${temperature}`;
 
   let weatherMainElement = document.querySelector("#wather-main");
   weatherMainElement.innerHTML = response.data.weather[0].main;
@@ -72,21 +72,62 @@ function showAll(response) {
     "src",
     `http://openweathermap.org/img/wn/${response.data.weather[0].icon}@2x.png`
   );
+
+  iconElement.setAttribute("alt", response.data.weather[0].description);
+
+  getForecast(response.data.coord);
 }
 
-function gradC(curentGradC) {
-  let gradElement = document.querySelector("#grad");
-  gradElement.innerHTML = `${currentGradCtemperature} °C`;
+function getForecast(coord) {
+  let apiUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${coord.lat}&lon=${coord.lon}&appid=${apiKey}&units=metric`;
+  axios.get(apiUrl).then(displayForecast);
 }
 
-function gradF(curentGradC) {
-  let gradElement = document.querySelector("#grad");
-  gradElement.innerHTML = `${Math.round(
-    (9 / 5) * currentGradCtemperature + 32
-  )} °F`;
+function formatDay(timestamp) {
+  let date = new Date(timestamp * 1000);
+  let day = date.getDay();
+  let days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return days[day];
 }
 
-let currentGradCtemperature = Number(document.querySelector("#grad").innerHTML);
+function displayForecast(response) {
+  let forecast = response.data.daily;
+
+  let forecastElement = document.querySelector("#forecast");
+  let forecastHTML = `<div class="row">`;
+
+  forecast.forEach(function (forecastDay, index) {
+    if (index < 6) {
+      forecastHTML =
+        forecastHTML +
+        `
+           
+            <div class="col-2">
+              <div class="weather-forecast-date">${formatDay(
+                forecastDay.dt
+              )}</div>
+
+              <img src="http://openweathermap.org/img/wn/${
+                forecastDay.weather[0].icon
+              }@2x.png" alt="${
+          forecastDay.weather[0].description
+        }" width="36" />
+              <div class="weather-forecast-temperature">
+                <span class="weather-forecast-temperature-max">${Math.round(
+                  forecastDay.temp.max
+                )}°</span>
+                <span class="weather-forecast-temperature-min">${Math.round(
+                  forecastDay.temp.max
+                )}°</span>
+              </div>
+            </div>
+          `;
+    }
+  });
+
+  forecastElement.innerHTML = forecastHTML + `</div>`;
+}
+
 let dateElement = document.querySelector("#date");
 dateElement.innerHTML = formatDate(new Date());
 
@@ -95,12 +136,6 @@ form.addEventListener("submit", searchSubmit);
 
 let currentButton = document.querySelector("#current-button");
 currentButton.addEventListener("click", currentSubmit);
-
-let gradCElement = document.querySelector("#grad-C");
-gradCElement.addEventListener("click", gradC);
-
-let gradFElement = document.querySelector("#grad-F");
-gradFElement.addEventListener("click", gradF);
 
 let apiKey = "a710bd8bd76400c9658ef649d9e81728";
 
